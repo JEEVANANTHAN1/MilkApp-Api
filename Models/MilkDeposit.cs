@@ -51,6 +51,6 @@ public class MilkDeposit : BaseModel
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
 
-    [Reference(typeof(Farmer))]
+    [Reference(typeof(Farmer), useInnerJoin: false)]
     public Farmer? Farmer { get; set; }
 }
