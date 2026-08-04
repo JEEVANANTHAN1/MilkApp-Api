@@ -5,8 +5,16 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
+    {
+        Title = "MilkApp API",
+        Version = "v1",
+        Description = "API for monitoring milk deposits, backed by Supabase."
+    });
+});
 
 builder.Services
     .AddOptions<SupabaseOptions>()
@@ -28,10 +36,11 @@ builder.Services.AddSingleton(sp =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.MapOpenApi();
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "MilkApp API v1");
+});
 
 app.UseHttpsRedirection();
 
