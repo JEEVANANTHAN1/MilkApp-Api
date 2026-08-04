@@ -13,6 +13,7 @@ WORKDIR /app
 COPY --from=build /app/publish .
 
 ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DOTNET_hostBuilder__reloadConfigOnChange=false
 EXPOSE 8080
 
 CMD ASPNETCORE_URLS=http://+:${PORT:-8080} dotnet MilkApp.Api.dll
