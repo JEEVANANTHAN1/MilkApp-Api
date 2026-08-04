@@ -16,7 +16,7 @@ public class MilkDepositsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<MilkDeposit>>> GetAll(
+    public async Task<ActionResult<List<MilkDepositDto>>> GetAll(
         [FromQuery] Guid? farmerId,
         [FromQuery] DateTime? from,
         [FromQuery] DateTime? to)
@@ -42,21 +42,21 @@ public class MilkDepositsController : ControllerBase
         }
 
         var response = await query.Order(d => d.DepositedAt, Constants.Ordering.Descending).Get();
-        return Ok(response.Models);
+        return Ok(response.Models.Select(MilkDepositDto.FromModel));
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<MilkDeposit>> GetById(Guid id)
+    public async Task<ActionResult<MilkDepositDto>> GetById(Guid id)
     {
         var deposit = await _supabase.From<MilkDeposit>()
             .Where(d => d.Id == id)
             .Single();
 
-        return deposit is null ? NotFound() : Ok(deposit);
+        return deposit is null ? NotFound() : Ok(MilkDepositDto.FromModel(deposit));
     }
 
     [HttpPost]
-    public async Task<ActionResult<MilkDeposit>> Create(MilkDeposit deposit)
+    public async Task<ActionResult<MilkDepositDto>> Create(MilkDeposit deposit)
     {
         deposit.Id = Guid.NewGuid();
         deposit.CreatedAt = DateTime.UtcNow;
@@ -67,7 +67,7 @@ public class MilkDepositsController : ControllerBase
 
         return created is null
             ? Problem("Failed to record milk deposit.")
-            : CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            : CreatedAtAction(nameof(GetById), new { id = created.Id }, MilkDepositDto.FromModel(created));
     }
 
     [HttpPut("{id:guid}")]

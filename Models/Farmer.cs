@@ -18,6 +18,9 @@ public class Farmer : BaseModel
     [Column("village")]
     public string? Village { get; set; }
 
+    [Column("member_code")]
+    public string? MemberCode { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
 }

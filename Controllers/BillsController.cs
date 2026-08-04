@@ -1,0 +1,97 @@
+using MilkApp.Api.Models;
+using Microsoft.AspNetCore.Mvc;
+using Postgrest;
+
+namespace MilkApp.Api.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class BillsController : ControllerBase
+{
+    private const string ImageBucket = "bill-images";
+
+    private readonly Supabase.Client _supabase;
+
+    public BillsController(Supabase.Client supabase)
+    {
+        _supabase = supabase;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<List<BillDto>>> GetAll()
+    {
+        var response = await _supabase.From<MilkDeposit>()
+            .Order(d => d.DepositedAt, Constants.Ordering.Descending)
+            .Get();
+
+        return Ok(response.Models.Select(d => BillDto.FromModel(d, d.Farmer)));
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<BillDto>> Create([FromForm] CreateBillRequest request)
+    {
+        Farmer? farmer = null;
+
+        if (!string.IsNullOrWhiteSpace(request.MemberCode))
+        {
+            farmer = await _supabase.From<Farmer>()
+                .Where(f => f.MemberCode == request.MemberCode)
+                .Single();
+
+            if (farmer is null)
+            {
+                var newFarmer = new Farmer
+                {
+                    Id = Guid.NewGuid(),
+                    Name = string.IsNullOrWhiteSpace(request.MemberName) ? request.MemberCode! : request.MemberName!,
+                    MemberCode = request.MemberCode,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                var farmerResponse = await _supabase.From<Farmer>().Insert(newFarmer);
+                farmer = farmerResponse.Models.SingleOrDefault();
+            }
+        }
+
+        string? imageUrl = null;
+        if (request.Image is { Length: > 0 })
+        {
+            using var stream = new MemoryStream();
+            await request.Image.CopyToAsync(stream);
+            var path = $"{Guid.NewGuid()}{Path.GetExtension(request.Image.FileName)}";
+
+            await _supabase.Storage.From(ImageBucket).Upload(stream.ToArray(), path);
+            imageUrl = _supabase.Storage.From(ImageBucket).GetPublicUrl(path);
+        }
+
+        var deposit = new MilkDeposit
+        {
+            Id = Guid.NewGuid(),
+            FarmerId = farmer?.Id,
+            QuantityLiters = request.QuantityLiters,
+            FatPercentage = request.FatPercent,
+            SnfPercentage = request.SnfPercent,
+            RatePerLiter = request.RatePerLiter,
+            TotalAmount = request.TotalAmount,
+            VendorName = request.VendorName,
+            Notes = request.Notes,
+            ImageUrl = imageUrl,
+            DepositedAt = request.BillDate.ToDateTime(TimeOnly.MinValue),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var response = await _supabase.From<MilkDeposit>().Insert(deposit);
+        var created = response.Models.SingleOrDefault();
+
+        return created is null
+            ? Problem("Failed to record bill.")
+            : StatusCode(StatusCodes.Status201Created, BillDto.FromModel(created, farmer));
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        await _supabase.From<MilkDeposit>().Where(d => d.Id == id).Delete();
+        return NoContent();
+    }
+}

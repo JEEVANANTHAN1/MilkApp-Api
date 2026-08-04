@@ -15,24 +15,24 @@ public class FarmersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<Farmer>>> GetAll()
+    public async Task<ActionResult<List<FarmerDto>>> GetAll()
     {
         var response = await _supabase.From<Farmer>().Get();
-        return Ok(response.Models);
+        return Ok(response.Models.Select(FarmerDto.FromModel));
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<Farmer>> GetById(Guid id)
+    public async Task<ActionResult<FarmerDto>> GetById(Guid id)
     {
         var farmer = await _supabase.From<Farmer>()
             .Where(f => f.Id == id)
             .Single();
 
-        return farmer is null ? NotFound() : Ok(farmer);
+        return farmer is null ? NotFound() : Ok(FarmerDto.FromModel(farmer));
     }
 
     [HttpPost]
-    public async Task<ActionResult<Farmer>> Create(Farmer farmer)
+    public async Task<ActionResult<FarmerDto>> Create(Farmer farmer)
     {
         farmer.Id = Guid.NewGuid();
         farmer.CreatedAt = DateTime.UtcNow;
@@ -42,7 +42,7 @@ public class FarmersController : ControllerBase
 
         return created is null
             ? Problem("Failed to create farmer.")
-            : CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            : CreatedAtAction(nameof(GetById), new { id = created.Id }, FarmerDto.FromModel(created));
     }
 
     [HttpPut("{id:guid}")]

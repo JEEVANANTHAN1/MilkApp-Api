@@ -73,7 +73,7 @@ Supabase__Key=<key>
 dotnet run
 ```
 
-Browse the OpenAPI document at `/openapi/v1.json` in development, or hit the endpoints directly:
+Browse the interactive Swagger UI at `/swagger` (raw spec at `/swagger/v1/swagger.json`), or hit the endpoints directly:
 
 - `GET/POST /api/farmers`, `GET/PUT/DELETE /api/farmers/{id}`
 - `GET/POST /api/milkdeposits`, `GET/PUT/DELETE /api/milkdeposits/{id}`
