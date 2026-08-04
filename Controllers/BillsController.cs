@@ -24,35 +24,12 @@ public class BillsController : ControllerBase
             .Order(d => d.DepositedAt, Constants.Ordering.Descending)
             .Get();
 
-        return Ok(response.Models.Select(d => BillDto.FromModel(d, d.Farmer)));
+        return Ok(response.Models.Select(BillDto.FromModel));
     }
 
     [HttpPost]
     public async Task<ActionResult<BillDto>> Create([FromForm] CreateBillRequest request)
     {
-        Farmer? farmer = null;
-
-        if (!string.IsNullOrWhiteSpace(request.MemberCode))
-        {
-            farmer = await _supabase.From<Farmer>()
-                .Where(f => f.MemberCode == request.MemberCode)
-                .Single();
-
-            if (farmer is null)
-            {
-                var newFarmer = new Farmer
-                {
-                    Id = Guid.NewGuid(),
-                    Name = string.IsNullOrWhiteSpace(request.MemberName) ? request.MemberCode! : request.MemberName!,
-                    MemberCode = request.MemberCode,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                var farmerResponse = await _supabase.From<Farmer>().Insert(newFarmer);
-                farmer = farmerResponse.Models.SingleOrDefault();
-            }
-        }
-
         string? imageUrl = null;
         if (request.Image is { Length: > 0 })
         {
@@ -67,13 +44,14 @@ public class BillsController : ControllerBase
         var deposit = new MilkDeposit
         {
             Id = Guid.NewGuid(),
-            FarmerId = farmer?.Id,
             QuantityLiters = request.QuantityLiters,
             FatPercentage = request.FatPercent,
             SnfPercentage = request.SnfPercent,
             RatePerLiter = request.RatePerLiter,
             TotalAmount = request.TotalAmount,
             VendorName = request.VendorName,
+            MemberCode = request.MemberCode,
+            MemberName = request.MemberName,
             Notes = request.Notes,
             ImageUrl = imageUrl,
             DepositedAt = request.BillDate.ToDateTime(TimeOnly.MinValue),
@@ -85,7 +63,7 @@ public class BillsController : ControllerBase
 
         return created is null
             ? Problem("Failed to record bill.")
-            : StatusCode(StatusCodes.Status201Created, BillDto.FromModel(created, farmer));
+            : StatusCode(StatusCodes.Status201Created, BillDto.FromModel(created));
     }
 
     [HttpDelete("{id:guid}")]

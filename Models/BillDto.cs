@@ -15,7 +15,7 @@ public record BillDto(
     string? ImageUrl,
     DateTime CreatedAt)
 {
-    public static BillDto FromModel(MilkDeposit deposit, Farmer? farmer) => new(
+    public static BillDto FromModel(MilkDeposit deposit) => new(
         deposit.Id,
         deposit.DepositedAt.ToString("yyyy-MM-dd"),
         deposit.QuantityLiters,
@@ -24,8 +24,8 @@ public record BillDto(
         deposit.VendorName,
         deposit.FatPercentage,
         deposit.SnfPercentage,
-        farmer?.MemberCode,
-        farmer?.Name,
+        deposit.MemberCode,
+        deposit.MemberName,
         deposit.Notes,
         deposit.ImageUrl,
         deposit.CreatedAt);

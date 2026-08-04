@@ -36,6 +36,12 @@ public class MilkDeposit : BaseModel
     [Column("vendor_name")]
     public string? VendorName { get; set; }
 
+    [Column("member_code")]
+    public string? MemberCode { get; set; }
+
+    [Column("member_name")]
+    public string? MemberName { get; set; }
+
     [Column("notes")]
     public string? Notes { get; set; }
 
@@ -50,7 +56,4 @@ public class MilkDeposit : BaseModel
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
-
-    [Reference(typeof(Farmer), useInnerJoin: false)]
-    public Farmer? Farmer { get; set; }
 }

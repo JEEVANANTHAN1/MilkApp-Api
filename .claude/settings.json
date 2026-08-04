@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"DELETE bill: %{http_code}\\\\n\" -X DELETE http://localhost:5110/api/bills/21eacb4e-293a-4fae-9a89-4a2e235730b9 --max-time 10)",
+      "Bash(chromium-cli --help)",
+      "Bash(npx --yes playwright --version)",
+      "Bash(node -e \"require.resolve\\('playwright'\\)\")",
+      "Bash(npm ls *)",
+      "Bash(npx -y playwright install chromium --with-deps)",
+      "Bash(dotnet run *)",
+      "Bash(echo \"backend pid $!\")",
+      "Bash(timeout 40 bash -c 'until curl -sf http://localhost:5110/api/bills >/dev/null; do sleep 1; done')",
+      "Bash(npx ng *)",
+      "Bash(echo \"frontend pid $!\")",
+      "Bash(timeout 60 bash -c 'until curl -sf http://localhost:4200 >/dev/null; do sleep 1; done')",
+      "Bash(netstat -ano)",
+      "Bash(curl -s -w \"\\\\nHTTP:%{http_code}\\\\n\" https://milkapp-api-n2k5.onrender.com/api/bills --max-time 30)",
+      "Bash(printf '\\\\x89PNG\\\\r\\\\n\\\\x1a\\\\n\\\\x00\\\\x00\\\\x00\\\\rIHDR\\\\x00\\\\x00\\\\x00\\\\x01\\\\x00\\\\x00\\\\x00\\\\x01\\\\x08\\\\x02\\\\x00\\\\x00\\\\x00\\\\x90wS\\\\xde\\\\x00\\\\x00\\\\x00\\\\rIDATx\\\\x9cc\\\\xf8\\\\xcf\\\\xc0\\\\x00\\\\x00\\\\x03\\\\x01\\\\x01\\\\x00\\\\x18\\\\xdd\\\\x8d\\\\xb0\\\\x00\\\\x00\\\\x00\\\\x00IEND\\\\xaeB\\\\x60\\\\x82')",
+      "Bash(curl -s -w '\\\\nHTTP:%{http_code}\\\\n' -X POST https://milkapp-api-n2k5.onrender.com/api/bills -F billDate=2026-08-04 -F quantityLiters=10 -F ratePerLiter=35 -F totalAmount=350 -F 'image=@render-test.png;type=image/png' --max-time 30)",
+      "Bash(curl -s -o /dev/null -w \"DELETE: %{http_code}\\\\n\" -X DELETE https://milkapp-api-n2k5.onrender.com/api/bills/5baae89c-eee5-4aec-bbc1-84938c40171e --max-time 30)",
+      "Bash(curl -s https://milkapp-api-n2k5.onrender.com/api/bills --max-time 30)",
+      "PowerShell(Get-Process -Id 23320 -ErrorAction SilentlyContinue)",
+      "Bash(echo \"started pid $!\")"
+    ]
+  }
+}
