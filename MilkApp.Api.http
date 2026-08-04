@@ -1,0 +1,6 @@
+@MilkApp.Api_HostAddress = http://localhost:5110
+
+GET {{MilkApp.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
