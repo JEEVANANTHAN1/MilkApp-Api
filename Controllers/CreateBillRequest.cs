@@ -34,6 +34,9 @@ public class CreateBillRequest
     [FromForm(Name = "notes")]
     public string? Notes { get; set; }
 
+    [FromForm(Name = "shift")]
+    public string Shift { get; set; } = "Morning";
+
     [FromForm(Name = "image")]
     public IFormFile? Image { get; set; }
 }

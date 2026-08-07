@@ -3,6 +3,7 @@ namespace MilkApp.Api.Models;
 public record BillDto(
     Guid Id,
     string BillDate,
+    string Shift,
     decimal QuantityLiters,
     decimal RatePerLiter,
     decimal TotalAmount,
@@ -18,6 +19,7 @@ public record BillDto(
     public static BillDto FromModel(MilkDeposit deposit) => new(
         deposit.Id,
         deposit.DepositedAt.ToString("yyyy-MM-dd"),
+        deposit.Shift ?? "Morning",
         deposit.QuantityLiters,
         deposit.RatePerLiter,
         deposit.TotalAmount,

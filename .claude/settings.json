@@ -20,7 +20,10 @@
       "Bash(curl -s -o /dev/null -w \"DELETE: %{http_code}\\\\n\" -X DELETE https://milkapp-api-n2k5.onrender.com/api/bills/5baae89c-eee5-4aec-bbc1-84938c40171e --max-time 30)",
       "Bash(curl -s https://milkapp-api-n2k5.onrender.com/api/bills --max-time 30)",
       "PowerShell(Get-Process -Id 23320 -ErrorAction SilentlyContinue)",
-      "Bash(echo \"started pid $!\")"
+      "Bash(echo \"started pid $!\")",
+      "Bash(timeout 30 bash -c 'until curl -sf http://localhost:5110/api/bills >/dev/null; do sleep 1; done')",
+      "Bash(curl -s -w '\\\\nHTTP:%{http_code}\\\\n' -X POST http://localhost:5110/api/bills -F billDate=2026-08-04 -F quantityLiters=12 -F ratePerLiter=38 -F totalAmount=456 -F memberCode=TEST01 -F 'memberName=Test Person' --max-time 15)",
+      "Bash(curl -s -o /dev/null -w \"DELETE: %{http_code}\\\\n\" -X DELETE http://localhost:5110/api/bills/3093f3f2-a625-4456-bd3c-f0dac29a5d17 --max-time 10)"
     ]
   }
 }

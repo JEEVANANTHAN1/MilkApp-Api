@@ -54,6 +54,7 @@ public class BillsController : ControllerBase
             MemberName = request.MemberName,
             Notes = request.Notes,
             ImageUrl = imageUrl,
+            Shift = request.Shift,
             DepositedAt = request.BillDate.ToDateTime(TimeOnly.MinValue),
             CreatedAt = DateTime.UtcNow
         };
