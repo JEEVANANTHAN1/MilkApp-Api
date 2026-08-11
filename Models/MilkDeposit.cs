@@ -18,6 +18,9 @@ public class MilkDeposit : BaseModel
     [Column("farmer_id")]
     public Guid? FarmerId { get; set; }
 
+    [Column("recipient_id")]
+    public Guid? RecipientId { get; set; }
+
     [Column("quantity_liters")]
     public decimal QuantityLiters { get; set; }
 

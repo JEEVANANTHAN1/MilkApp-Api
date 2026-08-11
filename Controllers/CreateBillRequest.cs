@@ -19,6 +19,9 @@ public class CreateBillRequest
     [FromForm(Name = "vendorName")]
     public string? VendorName { get; set; }
 
+    [FromForm(Name = "recipientId")]
+    public Guid? RecipientId { get; set; }
+
     [FromForm(Name = "fatPercent")]
     public decimal FatPercent { get; set; }
 

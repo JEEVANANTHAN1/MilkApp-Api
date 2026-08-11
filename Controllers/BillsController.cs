@@ -50,6 +50,7 @@ public class BillsController : ControllerBase
             RatePerLiter = request.RatePerLiter,
             TotalAmount = request.TotalAmount,
             VendorName = request.VendorName,
+            RecipientId = request.RecipientId,
             MemberCode = request.MemberCode,
             MemberName = request.MemberName,
             Notes = request.Notes,
