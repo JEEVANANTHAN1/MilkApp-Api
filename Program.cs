@@ -59,6 +59,8 @@ app.UseCors();
 
 app.UseAuthorization();
 
+app.MapGet("/api/health", () => Results.Ok(new { status = "healthy", message = "MilkApp API is online", timestamp = DateTime.UtcNow }));
+
 app.MapControllers();
 
 app.Run();
