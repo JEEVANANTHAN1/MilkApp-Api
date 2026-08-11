@@ -32,9 +32,12 @@ public class RecipientsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<RecipientDto>> Create(Recipient recipient)
+    public async Task<ActionResult<RecipientDto>> Create([FromBody] Recipient recipient)
     {
-        recipient.Id = Guid.NewGuid();
+        if (recipient.Id == Guid.Empty)
+        {
+            recipient.Id = Guid.NewGuid();
+        }
         recipient.CreatedAt = DateTime.UtcNow;
         if (string.IsNullOrWhiteSpace(recipient.Status))
         {
@@ -50,7 +53,7 @@ public class RecipientsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, Recipient recipient)
+    public async Task<IActionResult> Update(Guid id, [FromBody] Recipient recipient)
     {
         recipient.Id = id;
         await _supabase.From<Recipient>().Update(recipient);
