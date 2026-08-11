@@ -10,7 +10,7 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
     {
-        Title = "MilkApp API",
+        Title = "Milk Flow API",
         Version = "v1",
         Description = "API for monitoring milk deposits, backed by Supabase."
     });
@@ -50,7 +50,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "MilkApp API v1");
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Milk Flow API v1");
 });
 
 app.UseHttpsRedirection();
@@ -59,7 +59,7 @@ app.UseCors();
 
 app.UseAuthorization();
 
-app.MapGet("/api/health", () => Results.Ok(new { status = "healthy", message = "MilkApp API is online", timestamp = DateTime.UtcNow }));
+app.MapGet("/api/health", () => Results.Ok(new { status = "healthy", message = "Milk Flow API is online", timestamp = DateTime.UtcNow }));
 
 app.MapControllers();
 
