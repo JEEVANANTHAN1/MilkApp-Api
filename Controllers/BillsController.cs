@@ -74,4 +74,36 @@ public class BillsController : ControllerBase
         await _supabase.From<MilkDeposit>().Where(d => d.Id == id).Delete();
         return NoContent();
     }
+
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<BillDto>> Update(Guid id, [FromForm] CreateBillRequest request)
+    {
+        var existingResponse = await _supabase.From<MilkDeposit>().Where(d => d.Id == id).Get();
+        var deposit = existingResponse.Models.SingleOrDefault();
+        if (deposit is null) return NotFound();
+
+        if (request.Image is { Length: > 0 })
+        {
+            using var stream = new MemoryStream();
+            await request.Image.CopyToAsync(stream);
+            var path = $"{Guid.NewGuid()}{Path.GetExtension(request.Image.FileName)}";
+
+            await _supabase.Storage.From(ImageBucket).Upload(stream.ToArray(), path);
+            deposit.ImageUrl = _supabase.Storage.From(ImageBucket).GetPublicUrl(path);
+        }
+
+        deposit.QuantityLiters = request.QuantityLiters;
+        deposit.FatPercentage = request.FatPercent;
+        deposit.SnfPercentage = request.SnfPercent;
+        deposit.RatePerLiter = request.RatePerLiter;
+        deposit.TotalAmount = request.TotalAmount;
+        deposit.VendorName = request.VendorName;
+        deposit.RecipientId = request.RecipientId;
+        deposit.Shift = request.Shift;
+        deposit.Notes = request.Notes;
+        deposit.DepositedAt = request.BillDate.ToDateTime(TimeOnly.MinValue);
+
+        await _supabase.From<MilkDeposit>().Update(deposit);
+        return Ok(BillDto.FromModel(deposit));
+    }
 }
