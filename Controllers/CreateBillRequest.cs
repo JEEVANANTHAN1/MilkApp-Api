@@ -23,7 +23,7 @@ public class CreateBillRequest
     public Guid? RecipientId { get; set; }
 
     [FromForm(Name = "fatPercent")]
-    public decimal FatPercent { get; set; }
+    public decimal? FatPercent { get; set; }
 
     [FromForm(Name = "snfPercent")]
     public decimal? SnfPercent { get; set; }
