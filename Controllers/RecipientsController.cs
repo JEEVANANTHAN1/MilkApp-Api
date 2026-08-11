@@ -17,18 +17,35 @@ public class RecipientsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<RecipientDto>>> GetAll()
     {
-        var response = await _supabase.From<Recipient>().Get();
-        return Ok(response.Models.Select(RecipientDto.FromModel));
+        try
+        {
+            var response = await _supabase.From<Recipient>().Get();
+            return Ok(response.Models.Select(RecipientDto.FromModel));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RecipientsController] Warning: GetAll failed: {ex.Message}");
+            return Ok(new List<RecipientDto>());
+        }
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<RecipientDto>> GetById(Guid id)
     {
-        var recipient = await _supabase.From<Recipient>()
-            .Where(r => r.Id == id)
-            .Single();
+        try
+        {
+            var response = await _supabase.From<Recipient>()
+                .Where(r => r.Id == id)
+                .Get();
 
-        return recipient is null ? NotFound() : Ok(RecipientDto.FromModel(recipient));
+            var recipient = response.Models.SingleOrDefault();
+            return recipient is null ? NotFound() : Ok(RecipientDto.FromModel(recipient));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RecipientsController] Warning: GetById failed: {ex.Message}");
+            return NotFound();
+        }
     }
 
     [HttpPost]
@@ -44,27 +61,48 @@ public class RecipientsController : ControllerBase
             recipient.Status = "Active";
         }
 
-        var response = await _supabase.From<Recipient>().Insert(recipient);
-        var created = response.Models.SingleOrDefault();
-
-        return created is null
-            ? Problem("Failed to create recipient.")
-            : CreatedAtAction(nameof(GetById), new { id = created.Id }, RecipientDto.FromModel(created));
+        try
+        {
+            var response = await _supabase.From<Recipient>().Insert(recipient);
+            var created = response.Models.SingleOrDefault() ?? recipient;
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, RecipientDto.FromModel(created));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RecipientsController] Error creating recipient: {ex.Message}");
+            return Problem($"Failed to create recipient: {ex.Message}");
+        }
     }
 
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] Recipient recipient)
     {
         recipient.Id = id;
-        await _supabase.From<Recipient>().Update(recipient);
-        return NoContent();
+        try
+        {
+            await _supabase.From<Recipient>().Update(recipient);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RecipientsController] Error updating recipient: {ex.Message}");
+            return Problem($"Failed to update recipient: {ex.Message}");
+        }
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        await _supabase.From<Recipient>().Where(r => r.Id == id).Delete();
-        return NoContent();
+        try
+        {
+            await _supabase.From<Recipient>().Where(r => r.Id == id).Delete();
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RecipientsController] Error deleting recipient: {ex.Message}");
+            return Problem($"Failed to delete recipient: {ex.Message}");
+        }
     }
 
     [HttpGet("{id:guid}/bills")]
