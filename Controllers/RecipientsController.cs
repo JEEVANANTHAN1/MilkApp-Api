@@ -108,65 +108,90 @@ public class RecipientsController : ControllerBase
     [HttpGet("{id:guid}/bills")]
     public async Task<ActionResult<List<BillDto>>> GetBillsForRecipient(Guid id)
     {
-        var response = await _supabase.From<MilkDeposit>()
-            .Where(d => d.RecipientId == id)
-            .Order(d => d.DepositedAt, Postgrest.Constants.Ordering.Descending)
-            .Get();
+        try
+        {
+            var recipientResponse = await _supabase.From<Recipient>().Where(r => r.Id == id).Get();
+            var recipient = recipientResponse.Models.SingleOrDefault();
 
-        return Ok(response.Models.Select(BillDto.FromModel));
+            var response = await _supabase.From<MilkDeposit>()
+                .Order(d => d.DepositedAt, Postgrest.Constants.Ordering.Descending)
+                .Get();
+
+            var matches = response.Models.Where(d =>
+                d.RecipientId == id ||
+                (recipient != null && !string.IsNullOrWhiteSpace(d.VendorName) && d.VendorName.Equals(recipient.Name, StringComparison.OrdinalIgnoreCase))
+            );
+
+            return Ok(matches.Select(BillDto.FromModel));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[RecipientsController] GetBillsForRecipient error: {ex.Message}");
+            return Ok(new List<BillDto>());
+        }
     }
 
     [HttpGet("{id:guid}/summary")]
     public async Task<ActionResult<RecipientSummaryDto>> GetRecipientSummary(Guid id, [FromQuery] string? month)
     {
-        var recipient = await _supabase.From<Recipient>()
-            .Where(r => r.Id == id)
-            .Single();
-
-        if (recipient is null) return NotFound();
-
-        var billsResponse = await _supabase.From<MilkDeposit>()
-            .Where(d => d.RecipientId == id)
-            .Order(d => d.DepositedAt, Postgrest.Constants.Ordering.Descending)
-            .Get();
-
-        var bills = billsResponse.Models;
-        if (!string.IsNullOrWhiteSpace(month))
+        try
         {
-            bills = bills.Where(b => b.DepositedAt.ToString("yyyy-MM").Equals(month, StringComparison.OrdinalIgnoreCase)).ToList();
+            var recipientResponse = await _supabase.From<Recipient>().Where(r => r.Id == id).Get();
+            var recipient = recipientResponse.Models.SingleOrDefault();
+
+            if (recipient is null) return NotFound();
+
+            var billsResponse = await _supabase.From<MilkDeposit>()
+                .Order(d => d.DepositedAt, Postgrest.Constants.Ordering.Descending)
+                .Get();
+
+            var bills = billsResponse.Models.Where(d =>
+                d.RecipientId == id ||
+                (!string.IsNullOrWhiteSpace(d.VendorName) && d.VendorName.Equals(recipient.Name, StringComparison.OrdinalIgnoreCase))
+            ).ToList();
+
+            if (!string.IsNullOrWhiteSpace(month))
+            {
+                bills = bills.Where(b => b.DepositedAt.ToString("yyyy-MM").Equals(month, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            var totalLiters = bills.Sum(b => b.QuantityLiters);
+            var totalAmount = bills.Sum(b => b.TotalAmount);
+
+            var dateGroups = bills.GroupBy(b => b.DepositedAt.ToString("yyyy-MM-dd")).ToList();
+            var totalDeliveryDays = dateGroups.Count;
+
+            int morningOnly = 0, eveningOnly = 0, both = 0;
+            foreach (var group in dateGroups)
+            {
+                var shifts = group.Select(g => g.Shift).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                bool hasM = shifts.Contains("Morning");
+                bool hasE = shifts.Contains("Evening");
+                if (hasM && hasE) both++;
+                else if (hasM) morningOnly++;
+                else if (hasE) eveningOnly++;
+            }
+
+            var dtos = bills.Select(BillDto.FromModel).ToList();
+
+            var summary = new RecipientSummaryDto(
+                recipient.Id,
+                recipient.Name,
+                recipient.Status ?? "Active",
+                totalLiters,
+                totalAmount,
+                totalDeliveryDays,
+                morningOnly,
+                eveningOnly,
+                both,
+                dtos);
+
+            return Ok(summary);
         }
-
-        var totalLiters = bills.Sum(b => b.QuantityLiters);
-        var totalAmount = bills.Sum(b => b.TotalAmount);
-
-        var dateGroups = bills.GroupBy(b => b.DepositedAt.ToString("yyyy-MM-dd")).ToList();
-        var totalDeliveryDays = dateGroups.Count;
-
-        int morningOnly = 0, eveningOnly = 0, both = 0;
-        foreach (var group in dateGroups)
+        catch (Exception ex)
         {
-            var shifts = group.Select(g => g.Shift).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            bool hasM = shifts.Contains("Morning");
-            bool hasE = shifts.Contains("Evening");
-            if (hasM && hasE) both++;
-            else if (hasM) morningOnly++;
-            else if (hasE) eveningOnly++;
+            Console.WriteLine($"[RecipientsController] GetRecipientSummary error: {ex.Message}");
+            return Problem($"Failed to compute recipient summary: {ex.Message}");
         }
-
-        var dtos = bills.Select(BillDto.FromModel).ToList();
-
-        var summary = new RecipientSummaryDto(
-            recipient.Id,
-            recipient.Name,
-            recipient.Status ?? "Active",
-            totalLiters,
-            totalAmount,
-            totalDeliveryDays,
-            morningOnly,
-            eveningOnly,
-            both,
-            dtos);
-
-        return Ok(summary);
     }
 }

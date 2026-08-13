@@ -20,11 +20,19 @@ public class BillsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<BillDto>>> GetAll()
     {
-        var response = await _supabase.From<MilkDeposit>()
-            .Order(d => d.DepositedAt, Constants.Ordering.Descending)
-            .Get();
+        try
+        {
+            var response = await _supabase.From<MilkDeposit>()
+                .Order(d => d.DepositedAt, Constants.Ordering.Descending)
+                .Get();
 
-        return Ok(response.Models.Select(BillDto.FromModel));
+            return Ok(response.Models.Select(BillDto.FromModel));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[BillsController] Warning: GetAll failed: {ex.Message}");
+            return Ok(new List<BillDto>());
+        }
     }
 
     [HttpPost]
