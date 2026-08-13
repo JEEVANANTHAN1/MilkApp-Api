@@ -20,8 +20,18 @@ public class BillsController : ControllerBase
         _supabase = supabase;
     }
 
-    private Guid CurrentUserId =>
-        Guid.Parse(User.FindFirstValue("sub") ?? throw new UnauthorizedAccessException("User ID not found in token."));
+    private Guid CurrentUserId
+    {
+        get
+        {
+            var sub = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (string.IsNullOrEmpty(sub) || !Guid.TryParse(sub, out var userId))
+            {
+                throw new UnauthorizedAccessException("User ID not found in token.");
+            }
+            return userId;
+        }
+    }
 
     [HttpGet]
     public async Task<ActionResult<List<BillDto>>> GetAll()
