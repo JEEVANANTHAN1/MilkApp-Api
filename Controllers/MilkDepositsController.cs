@@ -1,11 +1,13 @@
 using MilkApp.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Postgrest;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MilkApp.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class MilkDepositsController : ControllerBase
 {
     private readonly Supabase.Client _supabase;

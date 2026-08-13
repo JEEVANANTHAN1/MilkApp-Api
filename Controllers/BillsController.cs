@@ -1,11 +1,14 @@
 using MilkApp.Api.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Postgrest;
+using System.Security.Claims;
 
 namespace MilkApp.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class BillsController : ControllerBase
 {
     private const string ImageBucket = "bill-images";
@@ -17,12 +20,17 @@ public class BillsController : ControllerBase
         _supabase = supabase;
     }
 
+    private Guid CurrentUserId =>
+        Guid.Parse(User.FindFirstValue("sub") ?? throw new UnauthorizedAccessException("User ID not found in token."));
+
     [HttpGet]
     public async Task<ActionResult<List<BillDto>>> GetAll()
     {
         try
         {
+            var userId = CurrentUserId;
             var response = await _supabase.From<MilkDeposit>()
+                .Where(d => d.UserId == userId)
                 .Order(d => d.DepositedAt, Constants.Ordering.Descending)
                 .Get();
 
@@ -38,6 +46,7 @@ public class BillsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<BillDto>> Create([FromForm] CreateBillRequest request)
     {
+        var userId = CurrentUserId;
         string? imageUrl = null;
         if (request.Image is { Length: > 0 })
         {
@@ -72,7 +81,8 @@ public class BillsController : ControllerBase
             ImageUrl = imageUrl,
             Shift = request.Shift,
             DepositedAt = request.BillDate.ToDateTime(TimeOnly.MinValue),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            UserId = userId,
         };
 
         try
@@ -108,14 +118,16 @@ public class BillsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        await _supabase.From<MilkDeposit>().Where(d => d.Id == id).Delete();
+        var userId = CurrentUserId;
+        await _supabase.From<MilkDeposit>().Where(d => d.Id == id && d.UserId == userId).Delete();
         return NoContent();
     }
 
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<BillDto>> Update(Guid id, [FromForm] CreateBillRequest request)
     {
-        var existingResponse = await _supabase.From<MilkDeposit>().Where(d => d.Id == id).Get();
+        var userId = CurrentUserId;
+        var existingResponse = await _supabase.From<MilkDeposit>().Where(d => d.Id == id && d.UserId == userId).Get();
         var deposit = existingResponse.Models.SingleOrDefault();
         if (deposit is null) return NotFound();
 

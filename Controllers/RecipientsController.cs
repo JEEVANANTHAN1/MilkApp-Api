@@ -1,10 +1,13 @@
 using MilkApp.Api.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace MilkApp.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class RecipientsController : ControllerBase
 {
     private readonly Supabase.Client _supabase;
@@ -14,12 +17,18 @@ public class RecipientsController : ControllerBase
         _supabase = supabase;
     }
 
+    private Guid CurrentUserId =>
+        Guid.Parse(User.FindFirstValue("sub") ?? throw new UnauthorizedAccessException("User ID not found in token."));
+
     [HttpGet]
     public async Task<ActionResult<List<RecipientDto>>> GetAll()
     {
         try
         {
-            var response = await _supabase.From<Recipient>().Get();
+            var userId = CurrentUserId;
+            var response = await _supabase.From<Recipient>()
+                .Where(r => r.UserId == userId)
+                .Get();
             return Ok(response.Models.Select(RecipientDto.FromModel));
         }
         catch (Exception ex)
@@ -34,8 +43,9 @@ public class RecipientsController : ControllerBase
     {
         try
         {
+            var userId = CurrentUserId;
             var response = await _supabase.From<Recipient>()
-                .Where(r => r.Id == id)
+                .Where(r => r.Id == id && r.UserId == userId)
                 .Get();
 
             var recipient = response.Models.SingleOrDefault();
@@ -51,12 +61,14 @@ public class RecipientsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<RecipientDto>> Create([FromBody] CreateRecipientRequest request)
     {
+        var userId = CurrentUserId;
         var recipient = new Recipient
         {
             Id = Guid.NewGuid(),
             Name = request.Name?.Trim() ?? string.Empty,
             Status = string.IsNullOrWhiteSpace(request.Status) ? "Active" : request.Status,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            UserId = userId,
         };
 
         try
@@ -75,11 +87,13 @@ public class RecipientsController : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] CreateRecipientRequest request)
     {
+        var userId = CurrentUserId;
         var recipient = new Recipient
         {
             Id = id,
             Name = request.Name?.Trim() ?? string.Empty,
-            Status = string.IsNullOrWhiteSpace(request.Status) ? "Active" : request.Status
+            Status = string.IsNullOrWhiteSpace(request.Status) ? "Active" : request.Status,
+            UserId = userId,
         };
 
         try
@@ -99,7 +113,8 @@ public class RecipientsController : ControllerBase
     {
         try
         {
-            await _supabase.From<Recipient>().Where(r => r.Id == id).Delete();
+            var userId = CurrentUserId;
+            await _supabase.From<Recipient>().Where(r => r.Id == id && r.UserId == userId).Delete();
             return NoContent();
         }
         catch (Exception ex)
@@ -114,10 +129,12 @@ public class RecipientsController : ControllerBase
     {
         try
         {
-            var recipientResponse = await _supabase.From<Recipient>().Where(r => r.Id == id).Get();
+            var userId = CurrentUserId;
+            var recipientResponse = await _supabase.From<Recipient>().Where(r => r.Id == id && r.UserId == userId).Get();
             var recipient = recipientResponse.Models.SingleOrDefault();
 
             var response = await _supabase.From<MilkDeposit>()
+                .Where(d => d.UserId == userId)
                 .Order(d => d.DepositedAt, Postgrest.Constants.Ordering.Descending)
                 .Get();
 
@@ -140,12 +157,14 @@ public class RecipientsController : ControllerBase
     {
         try
         {
-            var recipientResponse = await _supabase.From<Recipient>().Where(r => r.Id == id).Get();
+            var userId = CurrentUserId;
+            var recipientResponse = await _supabase.From<Recipient>().Where(r => r.Id == id && r.UserId == userId).Get();
             var recipient = recipientResponse.Models.SingleOrDefault();
 
             if (recipient is null) return NotFound();
 
             var billsResponse = await _supabase.From<MilkDeposit>()
+                .Where(d => d.UserId == userId)
                 .Order(d => d.DepositedAt, Postgrest.Constants.Ordering.Descending)
                 .Get();
 
