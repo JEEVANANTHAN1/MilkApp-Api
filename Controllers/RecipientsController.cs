@@ -49,17 +49,15 @@ public class RecipientsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<RecipientDto>> Create([FromBody] Recipient recipient)
+    public async Task<ActionResult<RecipientDto>> Create([FromBody] CreateRecipientRequest request)
     {
-        if (recipient.Id == Guid.Empty)
+        var recipient = new Recipient
         {
-            recipient.Id = Guid.NewGuid();
-        }
-        recipient.CreatedAt = DateTime.UtcNow;
-        if (string.IsNullOrWhiteSpace(recipient.Status))
-        {
-            recipient.Status = "Active";
-        }
+            Id = Guid.NewGuid(),
+            Name = request.Name?.Trim() ?? string.Empty,
+            Status = string.IsNullOrWhiteSpace(request.Status) ? "Active" : request.Status,
+            CreatedAt = DateTime.UtcNow
+        };
 
         try
         {
@@ -75,9 +73,15 @@ public class RecipientsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] Recipient recipient)
+    public async Task<IActionResult> Update(Guid id, [FromBody] CreateRecipientRequest request)
     {
-        recipient.Id = id;
+        var recipient = new Recipient
+        {
+            Id = id,
+            Name = request.Name?.Trim() ?? string.Empty,
+            Status = string.IsNullOrWhiteSpace(request.Status) ? "Active" : request.Status
+        };
+
         try
         {
             await _supabase.From<Recipient>().Update(recipient);
