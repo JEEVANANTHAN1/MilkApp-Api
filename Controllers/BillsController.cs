@@ -44,7 +44,32 @@ public class BillsController : ControllerBase
                 .Order(d => d.DepositedAt, Constants.Ordering.Descending)
                 .Get();
 
-            return Ok(response.Models.Select(BillDto.FromModel));
+            Dictionary<Guid, string> recipientDict = new();
+            try
+            {
+                var recipientResponse = await _supabase.From<Recipient>()
+                    .Where(r => r.UserId == userId)
+                    .Get();
+                recipientDict = recipientResponse.Models
+                    .GroupBy(r => r.Id)
+                    .ToDictionary(g => g.Key, g => g.First().Name);
+            }
+            catch (Exception rEx)
+            {
+                Console.WriteLine($"[BillsController] Warning: Recipient lookup failed: {rEx.Message}");
+            }
+
+            var billDtos = response.Models.Select(d =>
+            {
+                var dto = BillDto.FromModel(d);
+                if (d.RecipientId.HasValue && recipientDict.TryGetValue(d.RecipientId.Value, out var name))
+                {
+                    return dto with { VendorName = name };
+                }
+                return dto;
+            }).ToList();
+
+            return Ok(billDtos);
         }
         catch (Exception ex)
         {
