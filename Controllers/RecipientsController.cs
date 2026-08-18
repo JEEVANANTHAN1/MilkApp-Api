@@ -135,7 +135,7 @@ public class RecipientsController : ControllerBase
     }
 
     [HttpGet("{id:guid}/bills")]
-    public async Task<ActionResult<List<BillDto>>> GetBillsForRecipient(Guid id)
+    public async Task<ActionResult<List<BillDto>>> GetBillsForRecipient(Guid id, [FromQuery] string? startDate, [FromQuery] string? endDate)
     {
         try
         {
@@ -150,6 +150,16 @@ public class RecipientsController : ControllerBase
 
             var matches = response.Models.Where(d => d.RecipientId == id);
 
+            if (!string.IsNullOrWhiteSpace(startDate) && DateTime.TryParse(startDate, out var sDate))
+            {
+                matches = matches.Where(d => d.DepositedAt.Date >= sDate.Date);
+            }
+
+            if (!string.IsNullOrWhiteSpace(endDate) && DateTime.TryParse(endDate, out var eDate))
+            {
+                matches = matches.Where(d => d.DepositedAt.Date <= eDate.Date);
+            }
+
             return Ok(matches.Select(BillDto.FromModel));
         }
         catch (Exception ex)
@@ -160,7 +170,7 @@ public class RecipientsController : ControllerBase
     }
 
     [HttpGet("{id:guid}/summary")]
-    public async Task<ActionResult<RecipientSummaryDto>> GetRecipientSummary(Guid id, [FromQuery] string? month)
+    public async Task<ActionResult<RecipientSummaryDto>> GetRecipientSummary(Guid id, [FromQuery] string? month, [FromQuery] string? startDate, [FromQuery] string? endDate)
     {
         try
         {
@@ -180,6 +190,16 @@ public class RecipientsController : ControllerBase
             if (!string.IsNullOrWhiteSpace(month))
             {
                 bills = bills.Where(b => b.DepositedAt.ToString("yyyy-MM").Equals(month, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(startDate) && DateTime.TryParse(startDate, out var sDate))
+            {
+                bills = bills.Where(b => b.DepositedAt.Date >= sDate.Date).ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(endDate) && DateTime.TryParse(endDate, out var eDate))
+            {
+                bills = bills.Where(b => b.DepositedAt.Date <= eDate.Date).ToList();
             }
 
             var totalLiters = bills.Sum(b => b.QuantityLiters);
