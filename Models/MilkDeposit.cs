@@ -36,15 +36,6 @@ public class MilkDeposit : BaseModel
     [Column("total_amount")]
     public decimal TotalAmount { get; set; }
 
-    [Column("vendor_name")]
-    public string? VendorName { get; set; }
-
-    [Column("member_code")]
-    public string? MemberCode { get; set; }
-
-    [Column("member_name")]
-    public string? MemberName { get; set; }
-
     [Column("notes")]
     public string? Notes { get; set; }
 

@@ -59,16 +59,7 @@ public class BillsController : ControllerBase
                 Console.WriteLine($"[BillsController] Warning: Recipient lookup failed: {rEx.Message}");
             }
 
-            var billDtos = response.Models.Select(d =>
-            {
-                var dto = BillDto.FromModel(d);
-                if (d.RecipientId.HasValue && recipientDict.TryGetValue(d.RecipientId.Value, out var name))
-                {
-                    return dto with { VendorName = name };
-                }
-                return dto;
-            }).ToList();
-
+            var billDtos = response.Models.Select(BillDto.FromModel).ToList();
             return Ok(billDtos);
         }
         catch (Exception ex)
@@ -108,10 +99,7 @@ public class BillsController : ControllerBase
             SnfPercentage = request.SnfPercent,
             RatePerLiter = request.RatePerLiter,
             TotalAmount = request.TotalAmount,
-            VendorName = request.VendorName,
             RecipientId = request.RecipientId,
-            MemberCode = request.MemberCode,
-            MemberName = request.MemberName,
             Notes = request.Notes,
             ImageUrl = imageUrl,
             Shift = request.Shift,
@@ -188,7 +176,6 @@ public class BillsController : ControllerBase
         deposit.SnfPercentage = request.SnfPercent;
         deposit.RatePerLiter = request.RatePerLiter;
         deposit.TotalAmount = request.TotalAmount;
-        deposit.VendorName = request.VendorName;
         deposit.RecipientId = request.RecipientId;
         deposit.Shift = request.Shift;
         deposit.Notes = request.Notes;

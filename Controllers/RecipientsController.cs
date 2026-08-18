@@ -148,10 +148,7 @@ public class RecipientsController : ControllerBase
                 .Order(d => d.DepositedAt, Postgrest.Constants.Ordering.Descending)
                 .Get();
 
-            var matches = response.Models.Where(d =>
-                d.RecipientId == id ||
-                (recipient != null && !string.IsNullOrWhiteSpace(d.VendorName) && d.VendorName.Equals(recipient.Name, StringComparison.OrdinalIgnoreCase))
-            );
+            var matches = response.Models.Where(d => d.RecipientId == id);
 
             return Ok(matches.Select(BillDto.FromModel));
         }
@@ -178,10 +175,7 @@ public class RecipientsController : ControllerBase
                 .Order(d => d.DepositedAt, Postgrest.Constants.Ordering.Descending)
                 .Get();
 
-            var bills = billsResponse.Models.Where(d =>
-                d.RecipientId == id ||
-                (!string.IsNullOrWhiteSpace(d.VendorName) && d.VendorName.Equals(recipient.Name, StringComparison.OrdinalIgnoreCase))
-            ).ToList();
+            var bills = billsResponse.Models.Where(d => d.RecipientId == id).ToList();
 
             if (!string.IsNullOrWhiteSpace(month))
             {

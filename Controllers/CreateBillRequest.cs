@@ -16,9 +16,6 @@ public class CreateBillRequest
     [FromForm(Name = "totalAmount")]
     public decimal TotalAmount { get; set; }
 
-    [FromForm(Name = "vendorName")]
-    public string? VendorName { get; set; }
-
     [FromForm(Name = "recipientId")]
     public Guid? RecipientId { get; set; }
 
@@ -27,12 +24,6 @@ public class CreateBillRequest
 
     [FromForm(Name = "snfPercent")]
     public decimal? SnfPercent { get; set; }
-
-    [FromForm(Name = "memberCode")]
-    public string? MemberCode { get; set; }
-
-    [FromForm(Name = "memberName")]
-    public string? MemberName { get; set; }
 
     [FromForm(Name = "notes")]
     public string? Notes { get; set; }
